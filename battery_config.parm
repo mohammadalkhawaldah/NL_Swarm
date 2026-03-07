@@ -1,0 +1,28 @@
+# Extended Battery Configuration for Longer Missions
+# Battery capacity in mAh (default is usually 5000, increasing to 20000)
+BATT_CAPACITY,20000
+
+# Battery monitor enable (1 = enabled)
+BATT_MONITOR,4
+
+# Battery voltage when full (4.2V per cell * 4 cells = 16.8V)
+BATT_VOLT_MAX,16.8
+
+# Battery voltage when empty (3.3V per cell * 4 cells = 13.2V)
+BATT_VOLT_MIN,13.2
+
+# Current sensor calibration (amps per volt)
+BATT_AMP_PERVLT,18.18
+
+# Power consumption when hovering (watts) - lower = longer flight
+SIM_BATT_VOLTAGE,15.7
+
+# Reduce simulated current consumption for longer flights
+BATT_ARM_VOLT,13.0
+
+# Optional: Disable low battery failsafe for testing
+BATT_LOW_VOLT,0.0
+BATT_FS_LOW_ACT,0
+
+# Optional: Set higher current capacity
+BATT_AMP_OFFSET,0.0

@@ -1,0 +1,7 @@
+{
+  "uav1": { "grpc_port": 50040, "bid_port": 31001, "sitl_udp": 14540 },
+  "uav2": { "grpc_port": 50041, "bid_port": 31002, "sitl_udp": 14541 },
+  "uav3": { "grpc_port": 50042, "bid_port": 31003, "sitl_udp": 14542 },
+  "uav4": { "grpc_port": 50043, "bid_port": 31004, "sitl_udp": 14543 },
+  "uav5": { "grpc_port": 50044, "bid_port": 31005, "sitl_udp": 14544 }
+}

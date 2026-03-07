@@ -1,0 +1,17 @@
+
+experiment_id,run_number,timestamp,agent_id,event_type,task_id,task_type,location_lat,location_lon,altitude,duration,battery_start,battery_end,distance_to_target,bid_score,specialization_bonus,winner,phase1_result,phase1_reason,mission_success,mission_duration_actual,notes
+A1,001,2025-11-15T09:44:41,intent_parser,task_created,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,"Task: deliver 5km west of Queanbey High Australia"
+A1,001,2025-11-15T09:44:41,uav1,task_received,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,100,100,1748.22,N/A,N/A,N/A,N/A,N/A,N/A,N/A,"Task announced to all agents"
+A1,001,2025-11-15T09:44:41,uav2,task_received,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,68,68,1678.28,N/A,N/A,N/A,N/A,N/A,N/A,N/A,"Task announced to all agents"
+A1,001,2025-11-15T09:44:41,uav3,task_received,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,94,94,1673.03,N/A,N/A,N/A,N/A,N/A,N/A,N/A,"Task announced to all agents"
+A1,001,2025-11-15T09:44:41,uav4,task_received,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,0,0,N/A,N/A,N/A,N/A,N/A,N/A,N/A,N/A,"Task announced to all agents"
+A1,001,2025-11-15T09:44:41,uav1,phase1_assessment,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,100,100,1748.22,N/A,N/A,N/A,PASS,N/A,N/A,N/A,"Capabilities: PASS, Resources: PASS, Environment: PASS"
+A1,001,2025-11-15T09:44:41,uav2,phase1_assessment,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,68,68,1678.28,N/A,N/A,N/A,PASS,N/A,N/A,N/A,"Capabilities: PASS, Resources: PASS, Environment: PASS"
+A1,001,2025-11-15T09:44:41,uav3,phase1_assessment,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,94,94,1673.03,N/A,N/A,N/A,PASS,N/A,N/A,N/A,"Capabilities: PASS, Resources: PASS, Environment: PASS"
+A1,001,2025-11-15T09:44:41,uav4,phase1_assessment,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,0,0,N/A,N/A,N/A,N/A,FAIL,insufficient_battery,N/A,N/A,"Battery: 0% insufficient for 1.2min mission requirement"
+A1,001,2025-11-15T09:44:44,uav1,bid_submitted,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,100,100,1748.22,0.417,0,N/A,PASS,N/A,N/A,N/A,"Bid score: 0.417 (distance-based)"
+A1,001,2025-11-15T09:44:44,uav2,bid_submitted,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,68,68,1678.28,0.485,0.1,N/A,PASS,N/A,N/A,N/A,"Bid score: 0.485 (distance + 10% delivery specialization)"
+A1,001,2025-11-15T09:44:44,uav3,bid_submitted,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,94,94,1673.03,0.442,0,N/A,PASS,N/A,N/A,N/A,"Bid score: 0.442 (distance-based)"
+A1,001,2025-11-15T09:44:47,uav2,task_won,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,68,58,1678.28,0.485,0.1,uav2,PASS,N/A,TRUE,180,"Winner: uav2 with score 0.485, Mission completed successfully"
+A1,001,2025-11-15T09:44:47,uav1,task_lost,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,100,100,1748.22,0.417,0,uav2,PASS,N/A,N/A,N/A,"Lost to uav2, standing by"
+A1,001,2025-11-15T09:44:47,uav3,task_lost,delivery_2023-10-10T12:00:00Z,delivery,-35.351464,149.177974,30,1min,94,94,1673.03,0.442,0,uav2,PASS,N/A,N/A,N/A,"Lost to uav2, standing by"

@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+"""
+Generate example map screenshots/descriptions
+"""
+
+print("""
+╔══════════════════════════════════════════════════════════════════════════╗
+║                    ENHANCED MAP VISUALIZATION                             ║
+║                                                                           ║
+║  Example: "deliver 700 meters to the south of the desert square"         ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+┌────────────────────────────────────┐
+│  🎯 Mission Overview           [×] │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│  Offset: 700 meters south          │
+│                                    │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│  🔵  Desert Square                 │
+│      -35.363098, 149.166742        │
+│                                    │
+│  🔴  Target Location               │
+│      -35.369428, 149.166742        │
+│                                    │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│  📅 2025-11-09 21:11:14            │
+└────────────────────────────────────┘
+
+                    ┌─────────────────────────────────────────┐
+                    │          [Satellite View] 🛰️            │
+                    │                                         │
+                    │              🔵 R                        │
+                    │           Desert Square                 │
+                    │               │                         │
+                    │               │ Orange line             │
+                    │               │ with arrow ⬇️            │
+                    │               │                         │
+                    │               │                         │
+                    │               │ 700 meters              │
+                    │               │                         │
+                    │               │                         │
+                    │               ↓                         │
+                    │              🔴 T                        │
+                    │         Target Location                 │
+                    │                                         │
+                    │  [+] [-] [🗺️ ] [📷] [🌍] [⛰️ ] [🔍]      │
+                    └─────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ 🗺️  Map: OpenStreetMap                    ✅ No API key required!     │
+└────────────────────────────────────────────────────────────────────────┘
+
+
+INTERACTIVE FEATURES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Click 🔵 Reference Marker:
+  ┌─────────────────────────────────┐
+  │ 🔵 Desert Square                │
+  │ Reference Location              │
+  │ -35.36309804, 149.16348567      │
+  └─────────────────────────────────┘
+
+✓ Click 🔴 Target Marker:
+  ┌─────────────────────────────────┐
+  │ 🔴 Target Location              │
+  │ 700 meters south                │
+  │ of Desert Square                │
+  │ -35.36942804, 149.16348567      │
+  │                                 │
+  │ Task ID: TASK_001               │
+  │ Type: deliver                   │
+  │ Altitude: 50m                   │
+  └─────────────────────────────────┘
+
+✓ Zoom Controls:
+  [+] Zoom in (see more detail)
+  [-] Zoom out (see bigger area)
+
+✓ View Options:
+  [🗺️ ] Map view (standard roads/labels)
+  [🛰️ ] Satellite view (aerial imagery)
+  [🌍] Hybrid view (satellite + labels)
+  [⛰️ ] Terrain view (topographic)
+
+✓ Additional:
+  [📷] Street View (Google Maps only)
+  [🔍] Search for location
+  [⊞] Fullscreen mode
+
+
+COMPARISON: MAP PROVIDERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌─────────────────────────────────────┬─────────────────────────────────┐
+│     Google Maps (Enhanced)          │     OpenStreetMap               │
+├─────────────────────────────────────┼─────────────────────────────────┤
+│ ✓ Beautiful satellite imagery       │ ✓ No API key required          │
+│ ✓ Street View available             │ ✓ No usage limits              │
+│ ✓ Rich interactive features         │ ✓ Open source                  │
+│ ✓ Familiar interface                │ ✓ Clean, simple interface      │
+│ ✗ API key for full features         │ ✗ Less detailed imagery        │
+│ ✗ Usage limits apply                │ ✗ No Street View               │
+└─────────────────────────────────────┴─────────────────────────────────┘
+
+
+EXAMPLE USAGE SCENARIOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Scenario 1: Pre-Mission Verification
+────────────────────────────────────────
+User: "search 500 meters east of street gardens"
+  ↓
+System extracts: Street Gardens + 500m east
+  ↓
+System calculates target: [-35.360884, 149.171234]
+  ↓
+System asks: "View location on map?"
+  ↓
+User: "yes"
+  ↓
+Map opens showing BOTH locations
+  ↓
+User verifies: "Yes, that's correct!"
+  ↓
+Mission dispatched ✅
+
+
+Scenario 2: Error Detection
+────────────────────────────────────────
+User: "deliver 2000 meters south of compound area"
+  ↓
+System calculates target
+  ↓
+Map opens
+  ↓
+User sees: "Wait, that's in the middle of a lake!"
+  ↓
+User: "Cancel mission, let me fix that"
+  ↓
+Mission prevented ❌ → Safety maintained ✅
+
+
+Scenario 3: Training New Operators
+────────────────────────────────────────
+Instructor: "Let's try an offset mission"
+  ↓
+Student: "deliver 300 meters northwest of village area"
+  ↓
+Map opens with visual display
+  ↓
+Student: "Oh! I can SEE where northwest goes!"
+  ↓
+Better understanding of offset directions ✅
+
+
+TECHNICAL DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Map Generation:
+  • Creates standalone HTML file
+  • Uses JavaScript mapping libraries (Google Maps API or Leaflet.js)
+  • Saved to: /tmp/mission_map_YYYYMMDD_HHMMSS.html
+  • Opens automatically in default browser
+
+Markers:
+  • Reference (Blue): Circle with "R" label
+  • Target (Red): Circle with "T" label
+  • Custom styling with shadows and borders
+
+Line:
+  • Color: Orange (#FF9800)
+  • Width: 4px
+  • Style: Solid line with arrow at target end
+  • Shows direction of offset
+
+Coordinates:
+  • Displayed in decimal degrees
+  • 6-8 decimal places precision
+  • Format: latitude, longitude
+
+Browser Support:
+  • Chrome/Chromium ✓
+  • Firefox ✓
+  • Safari ✓
+  • Edge ✓
+  • Any modern browser with JavaScript
+
+
+INTEGRATION WITH EXISTING SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current Workflow:
+  1. User enters natural language command
+  2. System extracts task with OpenAI
+  3. System validates location (fuzzy matching)
+  4. System calculates target coordinates
+  5. System displays extracted information
+  6. User confirms and sends to agents
+
+NEW Enhanced Workflow:
+  1. User enters natural language command
+  2. System extracts task with OpenAI
+  3. System validates location (fuzzy matching)
+  4. System calculates target coordinates
+  5. System displays extracted information
+  6. ✨ System prompts: "View location on map?"
+  7. ✨ If yes: Opens interactive map in browser
+  8. ✨ User visually verifies the location
+  9. User confirms and sends to agents
+
+
+FILES CREATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/home/moham/mavsdk_bin/mini/
+├── map_visualizer_enhanced.py       ← Google Maps version
+├── map_visualizer_osm.py            ← OpenStreetMap version
+├── demo_map_visualization.py        ← Interactive demo
+├── MAP_VISUALIZATION_FEATURE.md     ← Full documentation
+└── MAP_QUICK_START.md               ← Quick reference guide
+
+
+NEXT STEPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ready to integrate? Here's what to do:
+
+1. Test the visualizers:
+   $ python demo_map_visualization.py
+
+2. Choose your preferred map provider:
+   • Google Maps → map_visualizer_enhanced.py
+   • OpenStreetMap → map_visualizer_osm.py
+
+3. Integrate into task_extract_send_rdp.py:
+   • Import the map visualizer
+   • After extracting task, prompt user
+   • If yes, call open_enhanced_map() or open_osm_map()
+
+4. Enjoy visual mission verification! 🎉
+
+""")
