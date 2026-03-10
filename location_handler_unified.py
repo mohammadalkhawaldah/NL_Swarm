@@ -14,8 +14,10 @@ from map_simple_fallback import show_location_on_google_maps
 from location_extractor_ai import extract_location_info_with_ai
 from dotenv import load_dotenv
 
-# Load API key
-load_dotenv('/home/moham/mavsdk_bin/.env')
+# Load API key from the repo root if present.
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(PROJECT_ROOT, '.env'))
+load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 def get_timestamp():
@@ -294,3 +296,4 @@ if __name__ == "__main__":
         cont = input("\n▶️  Continue to next test? (y/n): ").strip().lower()
         if cont not in ['y', 'yes']:
             break
+

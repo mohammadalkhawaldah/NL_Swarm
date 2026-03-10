@@ -115,7 +115,9 @@ Return the structured location information."""
 if __name__ == "__main__":
     # Test the extractor
     from dotenv import load_dotenv
-    load_dotenv('/home/moham/mavsdk_bin/.env')
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    load_dotenv(os.path.join(project_root, '.env'))
+    load_dotenv()
     
     api_key = os.getenv("OPENAI_API_KEY")
     
@@ -153,3 +155,4 @@ if __name__ == "__main__":
             print_with_timestamp("❌ Extraction failed")
         
         print()
+

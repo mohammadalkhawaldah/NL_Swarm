@@ -280,24 +280,22 @@ def send_p2p_message(message, peer_ports):
     sock.close()
 
 async def wait_connected(drone: System, timeout=30):
-    """Wait for MAVSDK connection (same as working system)"""
-    async with asyncio.timeout(timeout):
+    async def _wait():
         async for st in drone.core.connection_state():
             if st.is_connected:
                 print(f"[{AGENT_ID}] Connected to mavsdk_server {GRPC_HOST}:{GRPC_PORT}")
                 return
-    raise TimeoutError("Connection timeout")
+    await asyncio.wait_for(_wait(), timeout=timeout)
 
 async def wait_basic_health(drone: System, timeout=60):
-    """Wait for basic health (same as working system)"""
-    async with asyncio.timeout(timeout):
+    async def _wait():
         async for h in drone.telemetry.health():
             if (h.is_gyrometer_calibration_ok and
                 h.is_accelerometer_calibration_ok and
                 h.is_magnetometer_calibration_ok):
                 print(f"[{AGENT_ID}] Sensors healthy")
                 return
-    raise TimeoutError("Health timeout")
+    await asyncio.wait_for(_wait(), timeout=timeout)
 
 async def publish_peer_state(drone: System, tx):
     period = 1.0 / PEER_HEARTBEAT_HZ
@@ -507,53 +505,27 @@ async def handle_task_selection(task, drone, agent, bid_tx):
                 if score_data["drone_id"] != AGENT_ID and score_data not in peer_scores:
                     peer_scores.append(score_data)
             del task_scores[task_id]
+    required_drones = max(1, int(task.get("required_drones", 1)))
     # Build all_scores with all unique drone_ids (including self)
     all_scores_dict = {AGENT_ID: my_score}
     for p in peer_scores:
         all_scores_dict[p["drone_id"]] = p["score"]
     all_scores = sorted(all_scores_dict.items(), key=lambda x: (-x[1], x[0]))
-    winner_id, winner_score = all_scores[0]
+    selected_winners = [drone_id for drone_id, _ in all_scores[:required_drones]]
     print(f"\n[{AGENT_ID}] \U0001F3C1 Bidding Results for task {task_id}:")
     for i, (drone_id, score) in enumerate(all_scores):
-        status = "\U0001F3C6 WINNER" if i == 0 else "   "
+        status = "\U0001F3C6 SELECTED" if drone_id in selected_winners else "   "
         print(f"   {status} {drone_id}: {score}")
     if len(all_scores) == 1:
-        print(f"[{AGENT_ID}] \u26A0\uFE0F No peer response received - winning by default")
-    if winner_id == AGENT_ID:
-        print(f"[{AGENT_ID}] \U0001F3C6 I WON! Executing task {task_id}")
-        
-        # Announce win to all peers
-        win_announcement = {
-            "type": "win_announcement",
-            "task_id": task_id,
-            "drone_id": AGENT_ID,
-            "score": my_score,
-            "timestamp": time.time()
-        }
-        send_p2p_message(win_announcement, PEER_BID_PORTS)
-        
-        # Wait briefly for conflict detection
-        await asyncio.sleep(0.5)
-        
-        # Check if another drone also announced win with higher score
-        conflict_detected = False
-        with score_lock:
-            if task_id in task_scores:
-                for score_data in task_scores[task_id]:
-                    if score_data.get("type") == "win_announcement" and score_data["drone_id"] != AGENT_ID:
-                        if score_data["score"] > my_score:
-                            print(f"[{AGENT_ID}] ⚠️ CONFLICT DETECTED: {score_data['drone_id']} also won with higher score ({score_data['score']} > {my_score})")
-                            print(f"[{AGENT_ID}] 🛑 Yielding to {score_data['drone_id']}")
-                            conflict_detected = True
-                            assigned_tasks[score_data['drone_id']] = task
-                            break
-        
-        if not conflict_detected:
-            assigned_tasks[AGENT_ID] = task  # Track self-assignment (store full task)
-            await execute_mission(drone, task)
+        print(f"[{AGENT_ID}] \u26A0\uFE0F No peer response received - selected by default")
+    if AGENT_ID in selected_winners:
+        print(f"[{AGENT_ID}] \U0001F3C6 Selected for task {task_id}. Executing mission.")
+        assigned_tasks[AGENT_ID] = task
+        await execute_mission(drone, task)
     else:
-        print(f"[{AGENT_ID}] \U0001F92C {winner_id} won. Standing by for next task.")
-        assigned_tasks[winner_id] = task  # Track peer assignment (store full task)
+        print(f"[{AGENT_ID}] \U0001F92C Not selected. Standing by for next task.")
+        for winner_id in selected_winners:
+            assigned_tasks[winner_id] = task
 
 async def execute_mission(drone, task):
     agent = None
@@ -600,12 +572,32 @@ async def execute_mission(drone, task):
             print(f"[{AGENT_ID}] ⚠️ Could not get armed/altitude state: {e}")
 
         altitude = task.get('altitude', 10)
-        # If not armed or not airborne, do normal takeoff
-        if not is_armed or current_alt < 2.0:
+        # If the drone is on the ground, normalize its state before takeoff.
+        if current_alt < 2.0:
             await drone.action.set_takeoff_altitude(altitude)
-            print(f"[{AGENT_ID}] Arming and taking off to {altitude}m...")
-            await drone.action.arm()
-            await drone.action.takeoff()
+            if not is_armed:
+                print(f"[{AGENT_ID}] Arming and taking off to {altitude}m...")
+                await drone.action.arm()
+            else:
+                print(f"[{AGENT_ID}] Armed on ground. Re-arming cleanly before takeoff...")
+                try:
+                    await drone.action.disarm()
+                    await asyncio.sleep(1.0)
+                except Exception as e:
+                    print(f"[{AGENT_ID}] ⚠️ Disarm before retry failed: {e}")
+                await drone.action.arm()
+            try:
+                await drone.action.takeoff()
+            except Exception as e:
+                if is_armed:
+                    print(f"[{AGENT_ID}] ⚠️ Initial takeoff failed while armed on ground: {e}")
+                    print(f"[{AGENT_ID}] Retrying takeoff after arm reset...")
+                    await drone.action.disarm()
+                    await asyncio.sleep(1.0)
+                    await drone.action.arm()
+                    await drone.action.takeoff()
+                else:
+                    raise
             print(f"[{AGENT_ID}] ⏳ Monitoring SITL telemetry until {altitude}m altitude reached...")
             takeoff_complete = False
             while not takeoff_complete:

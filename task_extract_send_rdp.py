@@ -36,16 +36,15 @@ try:
 except ImportError:
     HAS_ENHANCED_MAPS = False
 
-# Add project root to path
-sys.path.append('/home/moham/mavsdk_bin')
-
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from openai import OpenAI
 import httpx
 
-# Load environment variables
-load_dotenv('/home/moham/mavsdk_bin/.env')
+# Load environment variables from the repo root if present.
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(PROJECT_ROOT, '.env'))
+load_dotenv()
 
 class Task(BaseModel):
     task_id: str
@@ -56,6 +55,7 @@ class Task(BaseModel):
     weather: str
     terrain: str
     priority: str
+    required_drones: int = 1
     description: str
 
 # Initialize OpenAI client
@@ -396,6 +396,7 @@ def extract_task_from_prompt(user_prompt):
                     Generate a unique task_id based on task type and timestamp.
                     Default altitude: 20-40 meters depending on task type.
                     Default duration: Use format "15min", "30min", "45min" (number + "min").
+                    Default required_drones: 1.
                     
                     IMPORTANT: The location coordinates have already been extracted and confirmed by the user.
                     Use ONLY the provided coordinates - do NOT try to extract or calculate location coordinates yourself.
@@ -408,6 +409,10 @@ def extract_task_from_prompt(user_prompt):
                     - Weather conditions
                     - Terrain type
                     - Priority level
+                    - Required drone count
+
+                    If the user says things like "by two drones", "with 3 drones", or "using four UAVs",
+                    set required_drones to that number. Otherwise set it to 1.
                     
                     For coordinates, if the user says "negative" interpret as minus sign.
                     Example: "negative thirty-five point three six three" = -35.363"""
@@ -424,6 +429,7 @@ def extract_task_from_prompt(user_prompt):
         # Override task location with our confirmed geocoded coordinates
         if task:
             task.location = confirmed_coords
+            task.required_drones = max(1, int(task.required_drones or 1))
             # Store the location name for display
             task._location_name = confirmed_location_name
             print_with_timestamp(f"✅ Using confirmed location: {confirmed_location_name}")
@@ -480,6 +486,7 @@ def display_extracted_task(task):
         print_with_timestamp(f"📍 Location: {task.location if task.location else 'Not specified'}")
     print_with_timestamp(f"🛫 Altitude: {task.altitude} meters")
     print_with_timestamp(f"⏱️ Duration: {task.estimated_duration}")
+    print_with_timestamp(f"🤝 Required Drones: {task.required_drones}")
     print_with_timestamp(f"🌤️ Weather: {task.weather}")
     print_with_timestamp(f"🏔️ Terrain: {task.terrain}")
     print_with_timestamp(f"🚨 Priority: {task.priority}")
@@ -534,7 +541,6 @@ def main():
             display_extracted_task(task)
             
             # Confirm before sending
-            import sys
             sys.stdout.flush()  # Ensure all previous output is displayed
             send_confirm = input("\n✅ Send this task to drone agents? (y/n): ").strip().lower()
             if send_confirm not in ['y', 'yes']:
@@ -551,6 +557,7 @@ def main():
                 "weather": task.weather,
                 "terrain": task.terrain,
                 "priority": task.priority,
+                "required_drones": task.required_drones,
                 "description": task.description,
                 "timestamp": datetime.now().isoformat()
             }
@@ -577,7 +584,7 @@ def main():
             
             print_with_timestamp("\n🏆 Mission Status:")
             print_with_timestamp("📊 Monitor agent terminals to see the bidding process")
-            print_with_timestamp("🥇 The winning drone will execute the mission")
+            print_with_timestamp("🥇 The selected drone(s) will execute the mission")
             print_with_timestamp("📤 Task delivery complete!")
             
             # Continue or exit
@@ -593,3 +600,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
