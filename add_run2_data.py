@@ -30,12 +30,10 @@ def add_run2_data():
         'bid_uav2': 0.339,
         'bid_uav3': 0.364,
         'bid_uav4': 'ineligible',
-        'bid_uav5': 'not_active',
         'battery_uav1': 100,
         'battery_uav2': 51,
         'battery_uav3': 94,
         'battery_uav4': 0,
-        'battery_uav5': 'not_active',
         'mission_success': 'yes',
         'mission_duration_actual': 1.0,  # From log: mission executed for 1 minute
         'distance_to_target_winner': 1907.93,  # From uav3 log
@@ -74,8 +72,8 @@ def add_run2_data():
                 'run_id', 'timestamp', 'task_type', 'task_location', 'task_lat', 'task_lon',
                 'task_altitude', 'task_duration', 'winning_agent', 'winning_bid',
                 'total_participants', 'eligible_agents', 'ineligible_agents',
-                'bid_uav1', 'bid_uav2', 'bid_uav3', 'bid_uav4', 'bid_uav5',
-                'battery_uav1', 'battery_uav2', 'battery_uav3', 'battery_uav4', 'battery_uav5',
+                'bid_uav1', 'bid_uav2', 'bid_uav3', 'bid_uav4',
+                'battery_uav1', 'battery_uav2', 'battery_uav3', 'battery_uav4',
                 'mission_success', 'mission_duration_actual', 'distance_to_target_winner', 'notes'
             ]
             

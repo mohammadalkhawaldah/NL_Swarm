@@ -15,6 +15,14 @@ from datetime import datetime
 import re
 import math
 import webbrowser
+from typing import Optional
+
+try:
+    import sounddevice as sd
+    import soundfile as sf
+    HAS_PY_AUDIO_BACKEND = True
+except Exception:
+    HAS_PY_AUDIO_BACKEND = False
 
 def get_timestamp():
     """Get current timestamp for logging"""
@@ -56,6 +64,11 @@ class Task(BaseModel):
     terrain: str
     priority: str
     required_drones: int = 1
+    search_diameter_m: Optional[int] = None
+    search_radius_m: Optional[float] = None
+    search_pattern: Optional[str] = None
+    partitioning: Optional[str] = None
+    lane_spacing_m: Optional[float] = None
     description: str
 
 # Initialize OpenAI client
@@ -77,6 +90,7 @@ client = OpenAI(
 # Communication setup
 TASK_MCAST_GRP = "239.255.0.2"
 TASK_MCAST_PORT = 30002
+WINDOWS_FFMPEG = "/mnt/c/ffmpeg-7.1.1-essentials_build/ffmpeg-7.1.1-essentials_build/bin/ffmpeg.exe"
 
 def check_audio_tools():
     """Check if external audio recording tools are available"""
@@ -95,6 +109,12 @@ def check_audio_tools():
         tools.append(('arecord', 'ALSA recording'))
     except FileNotFoundError:
         pass
+
+    if HAS_PY_AUDIO_BACKEND:
+        tools.append(('sounddevice', 'Python sounddevice recording'))
+
+    if os.path.exists(WINDOWS_FFMPEG):
+        tools.append(('windows_ffmpeg', 'Windows ffmpeg microphone recording'))
     
     return tools
 
@@ -148,10 +168,63 @@ def record_audio_external():
             print_with_timestamp("✅ Recording complete!")
             
         except (FileNotFoundError, subprocess.CalledProcessError) as e:
-            print_with_timestamp(f"❌ Recording failed: {e}")
-            if os.path.exists(temp_file.name):
-                os.unlink(temp_file.name)
-            return None
+            if os.path.exists(WINDOWS_FFMPEG):
+                try:
+                    print_with_timestamp("🎙️ Fallback to Windows ffmpeg recording...")
+                    device_probe = subprocess.run(
+                        [WINDOWS_FFMPEG, '-list_devices', 'true', '-f', 'dshow', '-i', 'dummy'],
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                    device_output = (device_probe.stdout or "") + "\n" + (device_probe.stderr or "")
+                    audio_device = None
+                    for line in device_output.splitlines():
+                        if '(audio)' in line and '"' in line:
+                            audio_device = line.split('"')[1]
+                            break
+                    if not audio_device:
+                        raise RuntimeError("No Windows microphone device found")
+
+                    windows_temp = subprocess.check_output(['wslpath', '-w', temp_file.name], text=True).strip()
+                    subprocess.run(
+                        [
+                            WINDOWS_FFMPEG,
+                            '-y',
+                            '-f', 'dshow',
+                            '-i', f'audio={audio_device}',
+                            '-t', '10',
+                            windows_temp,
+                        ],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    )
+                    print_with_timestamp(f"✅ Recorded using Windows microphone: {audio_device}")
+                except Exception as windows_audio_error:
+                    print_with_timestamp(f"❌ Windows ffmpeg recording failed: {windows_audio_error}")
+                    if os.path.exists(temp_file.name):
+                        os.unlink(temp_file.name)
+                    return None
+            elif HAS_PY_AUDIO_BACKEND:
+                try:
+                    print_with_timestamp("🎙️ Fallback to Python sounddevice recording...")
+                    duration_s = 10
+                    sample_rate = 44100
+                    recording = sd.rec(int(duration_s * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
+                    sd.wait()
+                    sf.write(temp_file.name, recording, sample_rate)
+                    print_with_timestamp("✅ Recording complete!")
+                except Exception as py_audio_error:
+                    print_with_timestamp(f"❌ Recording failed: {py_audio_error}")
+                    if os.path.exists(temp_file.name):
+                        os.unlink(temp_file.name)
+                    return None
+            else:
+                print_with_timestamp(f"❌ Recording failed: {e}")
+                if os.path.exists(temp_file.name):
+                    os.unlink(temp_file.name)
+                return None
     
     # Check if recording was successful
     if os.path.exists(temp_file.name) and os.path.getsize(temp_file.name) > 1000:
@@ -257,11 +330,17 @@ def get_user_input():
         print_with_timestamp("2. Voice input (⚠️ audio tools not installed)")
     
     while True:
-        choice = input("\nChoose input method (1 for text, 2 for voice): ").strip()
+        try:
+            choice = input("\nChoose input method (1 for text, 2 for voice): ").strip()
+        except EOFError:
+            return None
         
         if choice == "1":
             # Text input
-            mission_text = input("\n🗣️ Describe your mission: ").strip()
+            try:
+                mission_text = input("\n🗣️ Describe your mission: ").strip()
+            except EOFError:
+                return None
             if mission_text:
                 return mission_text
             else:
@@ -289,7 +368,10 @@ def get_user_input():
                     print_with_timestamp(f"\n✅ Transcribed: '{transcribed_text}'")
                     
                     # Confirm transcription
-                    confirm = input("\n✅ Use this transcription? (y/n): ").strip().lower()
+                    try:
+                        confirm = input("\n✅ Use this transcription? (y/n): ").strip().lower()
+                    except EOFError:
+                        return None
                     if confirm in ['y', 'yes']:
                         return transcribed_text
                     else:
@@ -410,9 +492,17 @@ def extract_task_from_prompt(user_prompt):
                     - Terrain type
                     - Priority level
                     - Required drone count
-
+                    - Search area diameter if the user explicitly gives one
+                    - Search coverage pattern if explicitly stated
+                    
                     If the user says things like "by two drones", "with 3 drones", or "using four UAVs",
                     set required_drones to that number. Otherwise set it to 1.
+
+                    For search tasks:
+                    - Default search_diameter_m to 300 if the user does not specify a size
+                    - Default search_pattern to "lawnmower"
+                    - Default partitioning to "voronoi"
+                    - Default lane_spacing_m to 30
                     
                     For coordinates, if the user says "negative" interpret as minus sign.
                     Example: "negative thirty-five point three six three" = -35.363"""
@@ -430,6 +520,13 @@ def extract_task_from_prompt(user_prompt):
         if task:
             task.location = confirmed_coords
             task.required_drones = max(1, int(task.required_drones or 1))
+            if str(task.task_type).lower() == "search":
+                search_diameter_m = int(float(task.search_diameter_m or 300))
+                task.search_diameter_m = max(200, search_diameter_m)
+                task.search_radius_m = task.search_diameter_m / 2.0
+                task.search_pattern = task.search_pattern or "lawnmower"
+                task.partitioning = task.partitioning or "voronoi"
+                task.lane_spacing_m = max(20.0, float(task.lane_spacing_m or 30.0))
             # Store the location name for display
             task._location_name = confirmed_location_name
             print_with_timestamp(f"✅ Using confirmed location: {confirmed_location_name}")
@@ -487,6 +584,11 @@ def display_extracted_task(task):
     print_with_timestamp(f"🛫 Altitude: {task.altitude} meters")
     print_with_timestamp(f"⏱️ Duration: {task.estimated_duration}")
     print_with_timestamp(f"🤝 Required Drones: {task.required_drones}")
+    if str(task.task_type).lower() == "search":
+        print_with_timestamp(f"🔎 Search Diameter: {int(task.search_diameter_m or 300)} meters")
+        print_with_timestamp(f"📐 Partitioning: {task.partitioning or 'voronoi'}")
+        print_with_timestamp(f"🧭 Coverage: {task.search_pattern or 'lawnmower'}")
+        print_with_timestamp(f"↔️ Lane Spacing: {float(task.lane_spacing_m or 30.0):.0f} meters")
     print_with_timestamp(f"🌤️ Weather: {task.weather}")
     print_with_timestamp(f"🏔️ Terrain: {task.terrain}")
     print_with_timestamp(f"🚨 Priority: {task.priority}")
@@ -496,9 +598,9 @@ def display_extracted_task(task):
     # Note: Location was already shown and confirmed on Google Maps during extraction
     print_with_timestamp("\n💡 Location was confirmed during extraction phase")
 
-def enforce_one_minute_duration(task):
-    """Force the estimated_duration of the task to '1min' regardless of input."""
-    task.estimated_duration = '1min'
+def enforce_default_duration(task):
+    """Force the estimated_duration of the task to '3min' regardless of input."""
+    task.estimated_duration = '3min'
     return task
 
 def main():
@@ -534,15 +636,19 @@ def main():
                 print_with_timestamp("❌ Failed to extract task information. Please try again.")
                 continue
             
-            # Enforce 1 minute duration
-            task = enforce_one_minute_duration(task)
+            # Enforce 3 minute duration
+            task = enforce_default_duration(task)
             
             # Display extracted task
             display_extracted_task(task)
             
             # Confirm before sending
             sys.stdout.flush()  # Ensure all previous output is displayed
-            send_confirm = input("\n✅ Send this task to drone agents? (y/n): ").strip().lower()
+            try:
+                send_confirm = input("\n✅ Send this task to drone agents? (y/n): ").strip().lower()
+            except EOFError:
+                print_with_timestamp("👋 Goodbye!")
+                break
             if send_confirm not in ['y', 'yes']:
                 print_with_timestamp("❌ Task cancelled")
                 continue
@@ -558,6 +664,11 @@ def main():
                 "terrain": task.terrain,
                 "priority": task.priority,
                 "required_drones": task.required_drones,
+                "search_diameter_m": task.search_diameter_m,
+                "search_radius_m": task.search_radius_m,
+                "search_pattern": task.search_pattern,
+                "partitioning": task.partitioning,
+                "lane_spacing_m": task.lane_spacing_m,
                 "description": task.description,
                 "timestamp": datetime.now().isoformat()
             }
@@ -588,7 +699,11 @@ def main():
             print_with_timestamp("📤 Task delivery complete!")
             
             # Continue or exit
-            continue_prompt = input("\n🔄 Send another task? (y/n): ").strip().lower()
+            try:
+                continue_prompt = input("\n🔄 Send another task? (y/n): ").strip().lower()
+            except EOFError:
+                print_with_timestamp("👋 Goodbye!")
+                break
             if continue_prompt not in ['y', 'yes']:
                 print_with_timestamp("👋 Goodbye!")
                 break

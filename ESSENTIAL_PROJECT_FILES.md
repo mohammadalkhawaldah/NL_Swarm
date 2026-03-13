@@ -22,7 +22,6 @@
 - **`D2_agent_new.py`** - Drone 2 agent (with conflict resolution)
 - **`D3_agent_new.py`** - Drone 3 agent (with conflict resolution)
 - **`D4_agent_new.py`** - Drone 4 agent (with conflict resolution)
-- **`D5_agent_new.py`** - Drone 5 agent (minimal implementation)
 
 ### Configuration Files
 - **`drone_config.json`** - Drone configuration (ports, IDs, locations)
@@ -79,7 +78,7 @@
    - Opens Google Maps in browser (multiple fallback methods)
    - Shows coordinates with label
 
-6. **Drone Agents (D1-D5)**
+6. **Drone Agents (D1-D4)**
    - Listen for tasks via multicast
    - Perform self-assessment and bidding
    - **Winner announcement and conflict resolution protocol**
@@ -116,7 +115,7 @@ User confirms
     ↓
 AI extracts mission details
     ↓
-Send to drone agents (D1-D5)
+Send to drone agents (D1-D4)
 ```
 
 ## To Run System

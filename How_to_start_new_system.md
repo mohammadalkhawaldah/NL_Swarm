@@ -38,8 +38,6 @@ sim_vehicle.py -v ArduCopter -I 1 --sysid 2 --console --map \
 sim_vehicle.py -v ArduCopter -I 2 --sysid 3 --console --map   --out=udp:127.0.0.1:14550   --out=udp:127.0.0.1:14542   -L SITL_3_LOCATION   --add-param-file=battery_config.parm
 
 sim_vehicle.py -v ArduCopter -I 3 --sysid 4 --console --map   --out=udp:127.0.0.1:14550   --out=udp:127.0.0.1:14543   -L SITL_4_LOCATION   --add-param-file=battery_config.parm
-
-sim_vehicle.py -v ArduCopter -I 4 --sysid 5 --console --map   --out=udp:127.0.0.1:14550   --out=udp:127.0.0.1:14544   -L SITL_5_LOCATION   --add-param-file=battery_config.parm
 ### Step 2: Start MAVSDK Servers
 ```bash
 # Terminal 3: UAV1 MAVSDK Server
@@ -48,10 +46,9 @@ mavsdk_server -p 50040 udp://:14540
 # Terminal 4: UAV2 MAVSDK Server  
 mavsdk_server -p 50041 udp://:14541
 
-# Additional UAVs MAVSDK Servers
+# Additional UAV MAVSDK Servers
 mavsdk_server -p 50042 udp://:14542
 mavsdk_server -p 50043 udp://:14543
-mavsdk_server -p 50044 udp://:14544
 ```
 
 ### Step 3: Start Drone Agents
